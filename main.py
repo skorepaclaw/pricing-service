@@ -201,11 +201,11 @@ HTML = """
                 const data = await res.json();
                 const elapsed = Date.now() - startTime;
                 
-                responseTime.textContent = `Response time: ${elapsed}ms` + (elapsed > 700 ? ' ⚠️ SLOW' : '');
-                responseTime.className = 'response-time' + (elapsed > 700 ? ' slow' : '');
+                responseTime.textContent = `Response time: ${elapsed}ms` + (elapsed > 1000 ? ' ⚠️ SLOW' : '');
+                responseTime.className = 'response-time' + (elapsed > 1000 ? ' slow' : '');
                 responseTime.style.display = 'block';
                 
-                if (elapsed > 700) {
+                if (elapsed > 1000) {
                     document.getElementById('status-dot').style.background = '#fbbf24';
                     document.getElementById('status-text').textContent = 'Degraded';
                 }
