@@ -7,7 +7,7 @@ import random
 app = FastAPI(title="Pricing Service")
 
 # SLOW MODE - when enabled, service responds slowly (simulating performance issue)
-SLOW_MODE = os.getenv("SLOW_MODE", "false").lower() == "true"  # Fixed: disabled slow mode
+SLOW_MODE = os.getenv("SLOW_MODE", "true").lower() == "true"
 SLOW_DELAY = float(os.getenv("SLOW_DELAY", "4.5"))  # seconds
 
 # Fake pricing data
