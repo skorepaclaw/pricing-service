@@ -18,8 +18,8 @@ async def notify_slow_response():
         pass  # Don't fail if webhook is unavailable
 
 # SLOW MODE - when enabled, service responds slowly (simulating performance issue)
-SLOW_MODE = os.getenv("SLOW_MODE", "false").lower() == "true"
-SLOW_DELAY = float(os.getenv("SLOW_DELAY", "4.5"))  # seconds
+SLOW_MODE = os.getenv("SLOW_MODE", "true").lower() == "true"
+SLOW_DELAY = float(os.getenv("SLOW_DELAY", "0.9"))  # seconds
 
 # Fake pricing data
 MODELS = [
