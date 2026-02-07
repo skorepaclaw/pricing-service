@@ -1,9 +1,7 @@
-name: Test & Deploy
+name: Test
 
 on:
   pull_request:
-    branches: [main]
-  push:
     branches: [main]
 
 jobs:
@@ -15,28 +13,37 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
       
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest
+        run: |
+          pip install -r requirements.txt
+          pip install pytest httpx
       
-      - name: Run tests
+      - name: Run health check test
         run: |
-          echo "Running tests..."
-          sleep 25
-          echo "✅ All tests passed!"
-      
-      - name: Lint check
-        run: |
-          echo "Checking code style..."
-          sleep 5
-          echo "✅ Code style OK!"
-
-  notify:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Notify deployment ready
-        run: |
-          echo "Tests passed on main - ready for deployment"
+          python -c "
+          import asyncio
+          from main import app
+          from fastapi.testclient import TestClient
+          
+          client = TestClient(app)
+          
+          # Test home page loads
+          response = client.get('/')
+          assert response.status_code == 200
+          assert 'ŠKODA' in response.text
+          
+          # Test health endpoint
+          response = client.get('/health')
+          assert response.status_code == 200
+          data = response.json()
+          assert 'status' in data
+          
+          # Test calculate endpoint
+          response = client.post('/api/calculate', json={'model': 'fabia', 'extras': []})
+          assert response.status_code == 200
+          assert response.json()['total'] == 419900
+          
+          print('✅ All tests passed!')
+          "
