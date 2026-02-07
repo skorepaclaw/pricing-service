@@ -19,7 +19,7 @@ async def notify_slow_response():
 
 # SLOW MODE - when enabled, service responds slowly (simulating performance issue)
 SLOW_MODE = os.getenv("SLOW_MODE", "true").lower() == "true"
-SLOW_DELAY = float(os.getenv("SLOW_DELAY", "0.9"))  # seconds
+SLOW_DELAY = float(os.getenv("SLOW_DELAY", "2.138"))  # seconds
 
 # Fake pricing data
 MODELS = [
