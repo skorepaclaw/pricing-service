@@ -75,9 +75,6 @@ HTML = """
         .extra-item .info { flex: 1; }
         .extra-item .name { font-weight: 500; }
         .extra-item .price { color: #666; font-size: 14px; }
-        .total-section { margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; }
-        .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .total-row.final { font-size: 24px; font-weight: 700; color: #4ba82e; margin-top: 15px; }
         .calculate-btn { width: 100%; background: #4ba82e; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: all 0.2s; }
         .calculate-btn:hover { background: #3d8c27; }
         .calculate-btn:disabled { background: #9ca3af; cursor: not-allowed; }
@@ -85,8 +82,12 @@ HTML = """
         .loading.active { display: block; }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4ba82e; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .response-time { text-align: center; margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 8px; color: #92400e; font-size: 13px; display: none; }
-        .response-time.slow { background: #fef2f2; color: #991b1b; }
+        .response-time { text-align: center; margin-top: 8px; color: #9ca3af; font-size: 11px; display: none; }
+        .response-time.slow { color: #dc2626; }
+        .total-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid #e5e7eb; display: none; }
+        .total-section.visible { display: block; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .total-row.final { font-size: 24px; font-weight: 700; color: #4ba82e; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -106,7 +107,13 @@ HTML = """
         <div class="sidebar">
             <h2>Příplatkové výbavy</h2>
             <div id="extras-list"></div>
-            <div class="total-section">
+            <button class="calculate-btn" onclick="calculate()" id="calc-btn">Vypočítat cenu</button>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Počítám slevy a dostupnost...</div>
+            </div>
+            <div class="response-time" id="response-time"></div>
+            <div class="total-section" id="total-section">
                 <div class="total-row">
                     <span>Základní cena</span>
                     <span id="base-price">-</span>
@@ -120,12 +127,6 @@ HTML = """
                     <span id="total-price">-</span>
                 </div>
             </div>
-            <button class="calculate-btn" onclick="calculate()" id="calc-btn">Vypočítat cenu</button>
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <div>Počítám slevy a dostupnost...</div>
-            </div>
-            <div class="response-time" id="response-time"></div>
         </div>
     </div>
     <script>
@@ -161,22 +162,14 @@ HTML = """
         function selectModel(id) {
             selectedModel = models.find(m => m.id === id);
             renderModels();
-            updatePrices();
+            document.getElementById('total-section').classList.remove('visible');
         }
         
         function toggleExtra(id) {
             if (selectedExtras.has(id)) selectedExtras.delete(id);
             else selectedExtras.add(id);
             renderExtras();
-            updatePrices();
-        }
-        
-        function updatePrices() {
-            const base = selectedModel?.base_price || 0;
-            const extrasTotal = [...selectedExtras].reduce((sum, id) => sum + extras.find(e => e.id === id).price, 0);
-            document.getElementById('base-price').textContent = base ? formatPrice(base) : '-';
-            document.getElementById('extras-price').textContent = formatPrice(extrasTotal);
-            document.getElementById('total-price').textContent = base ? formatPrice(base + extrasTotal) : '-';
+            document.getElementById('total-section').classList.remove('visible');
         }
         
         async function calculate() {
@@ -185,10 +178,12 @@ HTML = """
             const btn = document.getElementById('calc-btn');
             const loading = document.getElementById('loading');
             const responseTime = document.getElementById('response-time');
+            const totalSection = document.getElementById('total-section');
             
             btn.disabled = true;
             loading.classList.add('active');
             responseTime.style.display = 'none';
+            totalSection.classList.remove('visible');
             
             const startTime = Date.now();
             
@@ -201,7 +196,13 @@ HTML = """
                 const data = await res.json();
                 const elapsed = Date.now() - startTime;
                 
-                responseTime.textContent = `Response time: ${elapsed}ms` + (elapsed > 1000 ? ' ⚠️ SLOW' : '');
+                // Update prices from response
+                document.getElementById('base-price').textContent = formatPrice(data.base_price);
+                document.getElementById('extras-price').textContent = formatPrice(data.extras_total);
+                document.getElementById('total-price').textContent = formatPrice(data.final_price);
+                totalSection.classList.add('visible');
+                
+                responseTime.textContent = `${elapsed}ms` + (elapsed > 1000 ? ' ⚠️' : '');
                 responseTime.className = 'response-time' + (elapsed > 1000 ? ' slow' : '');
                 responseTime.style.display = 'block';
                 
