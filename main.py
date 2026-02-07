@@ -18,7 +18,7 @@ async def notify_slow_response():
         pass  # Don't fail if webhook is unavailable
 
 # SLOW MODE - when enabled, service responds slowly (simulating performance issue)
-SLOW_MODE = os.getenv("SLOW_MODE", "false").lower() == "true"
+SLOW_MODE = os.getenv("SLOW_MODE", "true").lower() == "true"
 SLOW_DELAY = float(os.getenv("SLOW_DELAY", "2.138"))  # seconds
 
 # Fake pricing data
@@ -34,17 +34,17 @@ MODELS = [
 ]
 
 EXTRAS = [
-    {"id": "nav", "name": "Navigace Columbus", "price": 35000},
-    {"id": "leather", "name": "Kožené sedačky", "price": 65000},
-    {"id": "sunroof", "name": "Panoramatická střecha", "price": 45000},
+    {"id": "nav", "name": "Columbus Navigation", "price": 35000},
+    {"id": "leather", "name": "Leather Seats", "price": 65000},
+    {"id": "sunroof", "name": "Panoramic Sunroof", "price": 45000},
     {"id": "sound", "name": "Canton Sound System", "price": 28000},
     {"id": "assist", "name": "Travel Assist", "price": 32000},
-    {"id": "matrix", "name": "Matrix LED světla", "price": 25000},
+    {"id": "matrix", "name": "Matrix LED Headlights", "price": 25000},
 ]
 
 HTML = """
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -93,7 +93,7 @@ HTML = """
 <body>
     <div class="header">
         <div class="logo">ŠKODA</div>
-        <h1>Konfigurátor & Ceník</h1>
+        <h1>Configurator & Pricing</h1>
         <div class="status-indicator">
             <div class="status-dot" id="status-dot"></div>
             <span id="status-text">Online</span>
@@ -101,29 +101,29 @@ HTML = """
     </div>
     <div class="container">
         <div>
-            <h2 style="margin-bottom: 20px; font-size: 18px; color: #666;">Vyberte model</h2>
+            <h2 style="margin-bottom: 20px; font-size: 18px; color: #666;">Select a model</h2>
             <div class="models" id="models-grid"></div>
         </div>
         <div class="sidebar">
-            <h2>Příplatkové výbavy</h2>
+            <h2>Optional Extras</h2>
             <div id="extras-list"></div>
-            <button class="calculate-btn" onclick="calculate()" id="calc-btn">Vypočítat cenu</button>
+            <button class="calculate-btn" onclick="calculate()" id="calc-btn">Calculate Price</button>
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <div>Počítám slevy a dostupnost...</div>
+                <div>Calculating discounts and availability...</div>
             </div>
             <div class="response-time" id="response-time"></div>
             <div class="total-section" id="total-section">
                 <div class="total-row">
-                    <span>Základní cena</span>
+                    <span>Base Price</span>
                     <span id="base-price">-</span>
                 </div>
                 <div class="total-row">
-                    <span>Příplatky</span>
-                    <span id="extras-price">0 Kč</span>
+                    <span>Extras</span>
+                    <span id="extras-price">€0</span>
                 </div>
                 <div class="total-row final">
-                    <span>Celkem</span>
+                    <span>Total</span>
                     <span id="total-price">-</span>
                 </div>
             </div>
@@ -135,7 +135,7 @@ HTML = """
         let selectedModel = null;
         let selectedExtras = new Set();
         
-        function formatPrice(p) { return p.toLocaleString('cs-CZ') + ' Kč'; }
+        function formatPrice(p) { return '€' + (p/100).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}); }
         
         function renderModels() {
             document.getElementById('models-grid').innerHTML = models.map(m => `
