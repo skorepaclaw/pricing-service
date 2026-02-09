@@ -1,25 +1,8 @@
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
-import asyncio
-import os
 import random
-import httpx
 
 app = FastAPI(title="Pricing Service")
-
-ALERT_WEBHOOK = os.getenv("ALERT_WEBHOOK", "http://host.docker.internal:8099/webhook/slow-response")
-
-async def notify_slow_response():
-    """Notify monitoring system about slow response"""
-    try:
-        async with httpx.AsyncClient() as client:
-            await client.post(ALERT_WEBHOOK, timeout=2.0)
-    except:
-        pass  # Don't fail if webhook is unavailable
-
-# SLOW MODE - when enabled, service responds slowly (simulating performance issue)
-SLOW_MODE = False  # Disabled - was causing 4.5s latency
-SLOW_DELAY = float(os.getenv("SLOW_DELAY", "2.138"))  # seconds
 
 # Fake pricing data
 MODELS = [
@@ -233,19 +216,11 @@ async def home():
 
 @app.get("/health")
 async def health():
-    if SLOW_MODE:
-        await asyncio.sleep(SLOW_DELAY)
-        return {"status": "degraded", "service": "pricing-service", "response_time_ms": int(SLOW_DELAY * 1000), "issue": "high_latency"}
     return {"status": "healthy", "service": "pricing-service", "response_time_ms": random.randint(20, 50)}
 
 @app.post("/api/calculate")
-async def calculate(request: Request, background_tasks: BackgroundTasks):
+async def calculate(request: Request):
     data = await request.json()
-    
-    # Simulate slow calculation when SLOW_MODE is enabled
-    if SLOW_MODE:
-        await asyncio.sleep(SLOW_DELAY)
-        background_tasks.add_task(notify_slow_response)
     
     model = next((m for m in MODELS if m["id"] == data.get("model")), None)
     if not model:
